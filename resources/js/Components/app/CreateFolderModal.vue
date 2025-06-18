@@ -9,6 +9,7 @@ import TextInput from '../TextInput.vue';
 import SecondaryButton from '../SecondaryButton.vue';
 import PrimaryButton from '../PrimaryButton.vue';
 import { nextTick, ref} from 'vue';
+import { showSuccessNotification } from '@/event-bus';
 
 //Props & Emit
 const {modelValue} = defineProps({
@@ -25,7 +26,7 @@ function createFolder() {
         preserveScroll: true,
         onSuccess: () => {
             closeModal()
-            // Show success notification
+            showSuccessNotification('Folder uploaded succesfully')
             form.reset();
         },
         onError: (errors) => {
@@ -67,7 +68,7 @@ const folderNameInput = ref(null)
                 <InputLabel for="folderName"
                             value="Folder Name"
                             class="sr-only"
-                />a
+                />
                 <TextInput  type="text"
                             ref="folderNameInput"
                             id="folderName" v-model="form.name"

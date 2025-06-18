@@ -40,7 +40,6 @@ class StoreFileRequest extends ParentIdBaseRequest
                 function($attribute, $value, $fail){
 
                     if(!$this->folder_name)
-
                     {
                         /** @var $value \Illuminate\Http\UploadedFile */
 

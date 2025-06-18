@@ -5,7 +5,7 @@
             class="block w-full mr-2"
             v-model="form.search"
             autocomplete
-            placeholder="Seacrh for files and folders"
+            placeholder="Search for files and folders"
         />
     </form>
 </template>
