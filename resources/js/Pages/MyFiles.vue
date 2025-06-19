@@ -8,7 +8,7 @@ import { httpGet, httpPost } from "@/Helper/http-helper";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Link, router, useForm, usePage } from "@inertiajs/vue3";
 import { computed, onMounted, onUpdated, ref } from "vue";
-import { showSuccessNotification } from "@/event-bus";
+import { emitter, ON_SEARCH, showSuccessNotification } from "@/event-bus";
 import ShareFilesButton from "@/Components/app/ShareFilesButton.vue";
 
 //Props & Emit
@@ -113,6 +113,10 @@ onUpdated(() => {
 onMounted(() => {
     params = new URLSearchParams(window.location.search);
     onlyFavourites.value = params.get("favourites") === "1";
+    search.value = params.get("search");
+    emitter.on(ON_SEARCH, (value)=>{
+        search.value = value
+    })
 
     const observer = new IntersectionObserver(
         (entries) =>
@@ -135,6 +139,7 @@ const allFiles = ref({
     data: props.files.data,
     next: props.files.links.next,
 });
+const search = ref('')
 </script>
 
 <template>
@@ -237,6 +242,12 @@ const allFiles = ref({
                             Name
                         </th>
                         <th
+                            v-if="search"
+                            class="text-sm font-medium text-gray-900 px-6 py-2 text-left"
+                        >
+                            Path
+                        </th>
+                        <th
                             class="text-sm font-medium text-gray-900 px-6 py-0 text-left"
                         >
                             Owner
@@ -316,6 +327,12 @@ const allFiles = ref({
                         >
                             <FileIcon :file="file" />
                             {{ file.name }}
+                        </td>
+                        <td
+                            v-if="search"
+                            class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
+                        >
+                            {{ file.path }}
                         </td>
                         <td
                             class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"

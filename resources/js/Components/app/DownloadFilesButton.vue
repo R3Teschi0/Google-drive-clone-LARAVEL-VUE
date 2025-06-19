@@ -81,7 +81,8 @@ function download() {
     } else if (props.sharedByMe) {
         url = route('file.downloadSharedByMe')
     }
-    httpGet(route("file.download") + "?" + p.toString()).then((res) => {
+
+    httpGet(url + "?" + p.toString()).then((res) => {
         console.log(res)
         if (!res.url) return;
 
