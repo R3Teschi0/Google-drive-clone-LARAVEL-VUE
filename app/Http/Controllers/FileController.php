@@ -78,6 +78,11 @@ class FileController extends Controller
         return Inertia::render('MyFiles', compact('files', 'folder', 'ancestors'));
     }
 
+    public function myFileVersions(Request $request)
+    {
+        dd($request);
+    }
+
     public function createFolder(StoreFolderRequest $request)
     {
 
@@ -246,14 +251,13 @@ class FileController extends Controller
     public function createZip($files): string
     {
         $zipPath = 'zip/' . Str::random() . '.zip';
-        $publicPath = $zipPath;
+        $publicPath = "$zipPath";
 
-        //dd($zipPath, $publicPath);
         if (!is_dir(dirname($publicPath))) {
             Storage::disk('public')->makeDirectory(dirname($publicPath));
         }
 
-        $zipFile = Storage::path($publicPath);
+        $zipFile = Storage::disk('public')->path($publicPath);
 
         $zip = new \ZipArchive();
 
@@ -263,16 +267,24 @@ class FileController extends Controller
 
         $zip->close();
 
-        return asset(Storage::url($zipPath));
+        return asset(Storage::disk('local')->url($zipPath));
     }
 
-    public function addFilesToZip($zip, $files, $ancestors = '')
+    private function addFilesToZip($zip, $files, $ancestors = '')
     {
         foreach ($files as $file) {
             if ($file->is_folder) {
                 $this->addFilesToZip($zip, $file->children, $ancestors . $file->name . '/');
             } else {
-                $zip->addFile(Storage::path($file->storage_path), $ancestors . $file->name);
+                $localPath = Storage::disk('local')->path($file->storage_path);
+                if ($file->uploaded_on_cloud == 1) {
+                    $dest = pathinfo($file->storage_path, PATHINFO_BASENAME);
+                    $content = Storage::get($file->storage_path);
+                    Storage::disk('public')->put($dest, $content);
+                    $localPath = Storage::disk('public')->path($dest);
+                }
+
+                $zip->addFile($localPath, $ancestors . $file->name);
             }
         }
     }
@@ -332,7 +344,7 @@ class FileController extends Controller
         $parent = $request->parent;
 
         $all = $data['all'] ?? false;
-        $email = $data['all'] ?? false;
+        $email = $data['email'] ?? false;
         $ids = $data['ids'] ?? [];
 
         if (!$all & empty($ids)) {
@@ -409,10 +421,6 @@ class FileController extends Controller
             return $files;
         }
 
-        if ($request->wantsJson()) {
-            return $files;
-        }
-
         return Inertia::render('SharedByMe', compact('files'));
     }
 
@@ -424,7 +432,7 @@ class FileController extends Controller
         $all = $data['all'] ?? false;
         $ids = $data['ids'] ?? [];
 
-        if (!$all & empty($ids)) {
+        if (!$all && empty($ids)) {
             return [
                 'message' => 'Please select files to download'
             ];
@@ -511,8 +519,8 @@ class FileController extends Controller
                 }
                 $url = $this->createZip($file->children);
                 $filename = $file->name . '.zip';
-                dd('hi');
             } else {
+
                 $dest = pathinfo($file->storage_path, PATHINFO_BASENAME);
                 if ($file->uploaded_on_cloud) {
                     $content = Storage::get($file->storage_path);

@@ -9,7 +9,6 @@ use Illuminate\Validation\Rule;
 
 class FileActionRequest extends ParentIdBaseRequest
 {
-
     /**
      * Get the validation rules that apply to the request.
      *
@@ -21,7 +20,6 @@ class FileActionRequest extends ParentIdBaseRequest
             'all' => 'nullable|bool',
             'ids.*' => [
                 Rule::exists('files', 'id'),
-
                 function ($attribute, $id, $fail) {
                     $file = File::query()
                         ->leftJoin('file_shares', 'file_shares.file_id', 'files.id')

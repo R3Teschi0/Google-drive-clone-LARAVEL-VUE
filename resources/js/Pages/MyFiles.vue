@@ -10,6 +10,7 @@ import { Link, router, useForm, usePage } from "@inertiajs/vue3";
 import { computed, onMounted, onUpdated, ref } from "vue";
 import { emitter, ON_SEARCH, showSuccessNotification } from "@/event-bus";
 import ShareFilesButton from "@/Components/app/ShareFilesButton.vue";
+import { useShiftPressed } from "@/Composables/useShiftPressed";
 
 //Props & Emit
 const props = defineProps({
@@ -76,6 +77,22 @@ function onSelectAllChange() {
 }
 
 function toggleFileSelected(file) {
+    if (lastId.value && isShiftPressed.value) {
+        const lastIndex = allFiles.value.data
+            .map((f) => f.id)
+            .findIndex((id) => id === lastId.value);
+        const currIndex = allFiles.value.data
+            .map((f) => f.id)
+            .findIndex((id) => id === file.id);
+        const start = Math.min(lastIndex, currIndex);
+        const end = Math.max(lastIndex, currIndex);
+        for (let i = start; i < end; i++) {
+            selected.value[allFiles.value.data[i].id] = true;
+        }
+    }
+    if (!selected.value[file.id] && !isShiftPressed.value) {
+        lastId.value = file.id;
+    }
     selected.value[file.id] = !selected.value[file.id];
     onSelectCheckboxChange(file);
 }
@@ -102,6 +119,10 @@ function onDelete() {
     selected.value = {};
 }
 
+function viewVersions(file) {
+    router.visit(route("myFileVersions", { file: file }));
+}
+
 //Hooks
 onUpdated(() => {
     allFiles.value = {
@@ -114,9 +135,9 @@ onMounted(() => {
     params = new URLSearchParams(window.location.search);
     onlyFavourites.value = params.get("favourites") === "1";
     search.value = params.get("search");
-    emitter.on(ON_SEARCH, (value)=>{
-        search.value = value
-    })
+    emitter.on(ON_SEARCH, (value) => {
+        search.value = value;
+    });
 
     const observer = new IntersectionObserver(
         (entries) =>
@@ -139,7 +160,9 @@ const allFiles = ref({
     data: props.files.data,
     next: props.files.links.next,
 });
-const search = ref('')
+const search = ref("");
+const { isShiftPressed } = useShiftPressed();
+const lastId = ref(null);
 </script>
 
 <template>
@@ -238,6 +261,9 @@ const search = ref('')
                         ></th>
                         <th
                             class="text-sm font-medium text-gray-900 px-6 py-2 text-left"
+                        ></th>
+                        <th
+                            class="text-sm font-medium text-gray-900 px-6 py-2 text-left"
                         >
                             Name
                         </th>
@@ -281,9 +307,6 @@ const search = ref('')
                             class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 w-[30px] max-w-[30px] pr-0"
                         >
                             <Checkbox
-                                @change="
-                                    ($event) => onSelectCheckboxChange(file)
-                                "
                                 v-model="selected[file.id]"
                                 :checked="selected[file.id] || allSelected"
                             />
@@ -318,6 +341,25 @@ const search = ref('')
                                         fill-rule="evenodd"
                                         d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z"
                                         clip-rule="evenodd"
+                                    />
+                                </svg>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 max-w-[40px] text-sm font-medium">
+                            <div @click.stop.prevent="viewVersions(file)">
+                                <svg
+                                v-if="!file.is_folder"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke-width="1.5"
+                                    stroke="currentColor"
+                                    class="size-6"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z"
                                     />
                                 </svg>
                             </div>

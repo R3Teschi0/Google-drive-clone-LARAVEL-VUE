@@ -40,7 +40,7 @@ function handlerDrop(ev) {
 }
 
 function uploadFiles(files) {
-    fileUploadForm.parent_id = page.props.folder.data.id;
+    fileUploadForm.parent_id = page.props.folder?.data?.id ?? page.props.folder?.id;
     fileUploadForm.files = files;
     fileUploadForm.relative_paths = [...files].map((f) => f.webkitRelativePath);
 

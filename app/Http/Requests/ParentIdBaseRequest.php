@@ -18,10 +18,10 @@ class ParentIdBaseRequest extends FormRequest
     {
         $this->parent = File::query()->where('id', $this->parent_id)
         ->first();
-        if ($this->parent && $this->parent->isOwnedBy(Auth::id())) {
-            return true;
+        if ($this->parent && !$this->parent->isOwnedBy(Auth::id())) {
+            return false;
         }
-        return false;
+        return true;
     }
 
     /**

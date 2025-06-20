@@ -10,6 +10,7 @@ import { httpGet } from "@/Helper/http-helper";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Link, router } from "@inertiajs/vue3";
 import { computed, onMounted, onUpdated, ref } from "vue";
+import { useShiftPressed } from "@/Composables/useShiftPressed";
 
 //Props & Emit
 const props = defineProps({
@@ -44,6 +45,22 @@ function onSelectAllChange() {
 }
 
 function toggleFileSelected(file) {
+    if (lastId.value && isShiftPressed.value) {
+        const lastIndex = allFiles.value.data
+            .map((f) => f.id)
+            .findIndex((id) => id === lastId.value);
+        const currIndex = allFiles.value.data
+            .map((f) => f.id)
+            .findIndex((id) => id === file.id);
+        const start = Math.min(lastIndex, currIndex);
+        const end = Math.max(lastIndex, currIndex);
+        for (let i = start; i < end; i++) {
+            selected.value[allFiles.value.data[i].id] = true;
+        }
+    }
+    if (!selected.value[file.id] && !isShiftPressed.value) {
+        lastId.value = file.id;
+    }
     selected.value[file.id] = !selected.value[file.id];
     onSelectCheckboxChange(file);
 }
@@ -98,6 +115,8 @@ const allFiles = ref({
     data: props.files.data,
     next: props.files.links.next,
 });
+const { isShiftPressed } = useShiftPressed();
+const lastId = ref(null);
 </script>
 
 <template>

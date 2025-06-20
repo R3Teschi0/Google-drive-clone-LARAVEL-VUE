@@ -37,8 +37,8 @@ const props = defineProps({
         type: Array,
         required: false
     },
-    sharedWithMe: false,
-    sharedByMe: false,
+    sharedWithMe: {type: Boolean, default: false},
+    sharedByMe: {type: Boolean, default: false},
 })
 
 //uses
@@ -85,6 +85,8 @@ function download() {
     httpGet(url + "?" + p.toString()).then((res) => {
         console.log(res)
         if (!res.url) return;
+
+        console.log(res.url);
 
         const a = document.createElement("a");
         a.download = res.filename;
