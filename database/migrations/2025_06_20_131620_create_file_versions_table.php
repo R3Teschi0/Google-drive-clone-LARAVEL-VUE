@@ -15,7 +15,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId("file_id")->constrained('files')->restrictOnDelete();
             $table->string('original_name', 1024);
-            $table->string('mime_type');
+            $table->string('storage_path', 1024)->nullable();
+            $table->string('mime');
             $table->string('size');
             $table->integer('version');
             $table->text('hash');

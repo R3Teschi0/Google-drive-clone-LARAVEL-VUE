@@ -19,12 +19,16 @@ Route::controller(FileController::class)
     ->middleware(['auth', 'verified'])
     ->group(function () {
         Route::get('/my-files/{folder?}', 'myFiles')->where('folder', '.*')->name('myFiles');
-         Route::get('/my-file-versions/{file?}', 'myFileVersions')->where('file', '.*')->name('myFileVersions');
+        Route::get('/my-file-versions/{file}', 'myFileVersions')->where('file_id', '.*')->where('file_path', '.*')->name('myFileVersions');
+        Route::get('/my-shared-versions/{file}', 'mySharedVersions')->where('file_id', '.*')->name('mySharedVersions');
         Route::post('/folder/create', 'createFolder')->name('folder.create');
+        Route::get('/folder/restoreVersion', 'restoreVersion')->name('restoreVersion');
         Route::post('/file', 'store')->name('file.store');
+        Route::post('/file/modify', 'modify')->name('file.modify');
         Route::delete('/file', 'destroy')->name('file.delete');
         Route::post('/file/restore', 'restore')->name('file.restore');
         Route::get('/file/download', 'download')->name('file.download');
+        Route::get('/file/downloadVersion', 'downloadVersion')->name('file.downloadVersion');
         Route::delete('/file/delete-forever', 'deleteForever')->name('file.deleteForever');
         Route::post('/file/add-to-favourite', 'addToFavourite')->name('file.addToFavourites');
         Route::post('/file/share', 'share')->name('file.share');

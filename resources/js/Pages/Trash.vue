@@ -237,7 +237,7 @@ const lastId = ref(null);
                             class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 flex items-center"
                         >
                             <FileIcon :file="file" />
-                            {{ file.name }}
+                            {{ file.original_name }}
                         </td>
                         <td
                             class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"

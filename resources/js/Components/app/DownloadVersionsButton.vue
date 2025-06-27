@@ -23,7 +23,6 @@
 import { useForm, usePage } from "@inertiajs/vue3";
 import PrimaryButton from "../PrimaryButton.vue";
 import { httpGet } from "@/Helper/http-helper";
-import { BaseTransitionPropsValidators } from "vue";
 import { showErrorDialog } from "@/event-bus";
 
 //props & Emit
@@ -37,9 +36,9 @@ const props = defineProps({
         type: Array,
         required: false,
     },
-    sharedWithMe: { type: Boolean, default: false },
-    sharedByMe: { type: Boolean, default: false },
-    parent_id: Number,
+    file_base_id: Number,
+    //sharedWithMe: { type: Boolean, default: false },
+    //sharedByMe: { type: Boolean, default: false },
 });
 
 //uses
@@ -62,31 +61,28 @@ function download() {
 
     const p = new URLSearchParams();
     if (props.parent_id) {
-        p.append(
-            "parent_id",
-            props.parent_id
-        );
+        p.append("parent_id", props.parent_id);
     }
 
     if (props.all) {
         p.append("all", props.all);
+        p.append("file_base_id", props.file_base_id);
     } else {
         for (let id of props.ids) {
             p.append("ids[]", id);
         }
+        p.append("file_base_id", props.file_base_id);
     }
 
-    let url = route("file.download");
-
+    let url = route("file.downloadVersion");
     // if (props.sharedWithMe) {
-    //     url = route('file.downloadSharedWithMe')
+    //     url = route("file.downloadSharedWithMe");
     // } else if (props.sharedByMe) {
-    //     url = route('file.downloadSharedByMe')
+    //     url = route("file.downloadSharedByMe");
     // }
 
     httpGet(url + "?" + p.toString()).then((res) => {
         if (res.file) {
-
             // Caso file base64
             const binary = window.atob(res.file);
             let blob = null;

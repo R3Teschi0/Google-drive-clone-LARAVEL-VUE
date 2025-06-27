@@ -9,12 +9,13 @@ use Illuminate\Support\Facades\Auth;
 class StoreFileRequest extends ParentIdBaseRequest
 {
 
-    protected function prepareForValidation(){
+    protected function prepareForValidation()
+    {
         $paths = array_filter($this->relative_paths ?? [], fn($f) => $f != null);
 
         $this->merge([
             'file_paths' => $paths,
-            'folder_name' => $this->detectFolderName($paths)
+            'folder_name' => $this->detectFolderName($paths),
         ]);
     }
 
@@ -22,35 +23,37 @@ class StoreFileRequest extends ParentIdBaseRequest
     {
         $data = $this->validated();
         $this->replace([
-            'file_tree' => $this->buildFileTree($this->file_paths, $data['files'])
+            'file_tree' => $this->buildFileTree($this->file_paths, $data['files']),
         ]);
     }
+
 
     /**
      * Get the validation rules that apply to the request.
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
+
     public function rules(): array
     {
         return array_merge(parent::rules(), [
             'files.*' => [
                 'required',
                 'file',
-                function($attribute, $value, $fail){
+                function ($attribute, $value, $fail) {
 
-                    if(!$this->folder_name)
-                    {
+                    if (!$this->folder_name) {
                         /** @var $value \Illuminate\Http\UploadedFile */
 
                         $file = File::query()->where('name', $value->getClientOriginalName())
                             ->where('created_by', Auth::id())
                             ->where('parent_id', $this->parent_id)
                             ->whereNull('deleted_at')
-                            ->exists();
+                            ->first();
 
-                        if($file) {
-                            $fail('file "' .$value->getClientOriginalName(). '"already exists.');
+
+                        if (!blank($file)) {
+                            $fail('file "' . $value->getClientOriginalName() . '"already exists.' . $this->parent_id);
                         }
                     }
                 }
@@ -59,17 +62,16 @@ class StoreFileRequest extends ParentIdBaseRequest
             'folder_name' => [
                 'nullable',
                 'string',
-                function($attribute, $value, $fail){
-                    if($value)
-                    {
+                function ($attribute, $value, $fail) {
+                    if ($value) {
                         $file = File::query()->where('name', $value)
-                        ->where('created_by', Auth::id())
-                        ->where('parent_id', $this->parent_id)
-                        ->whereNull('deleted_at')
-                        ->exists();
+                            ->where('created_by', Auth::id())
+                            ->where('parent_id', $this->parent_id)
+                            ->whereNull('deleted_at')
+                            ->exists();
 
-                        if($file) {
-                            $fail('folder "' . $value . '"already exists.');
+                        if ($file) {
+                            $fail('folder "' . $value . '" already exists.');
                         }
                     }
                 }
@@ -79,7 +81,7 @@ class StoreFileRequest extends ParentIdBaseRequest
 
     public function detectFolderName($paths)
     {
-        if(!$paths){
+        if (!$paths) {
             return null;
         }
 
@@ -102,22 +104,21 @@ class StoreFileRequest extends ParentIdBaseRequest
          ]
         */
 
-        foreach ($filePaths as $ind => $filePath){
-           $parts = explode('/', $filePath);
+        foreach ($filePaths as $ind => $filePath) {
+            $parts = explode('/', $filePath);
 
-           $currentNode = &$tree;
-           foreach ($parts as $i => $part) {
-                if(!isset($currentNode[$part])){
+            $currentNode = &$tree;
+            foreach ($parts as $i => $part) {
+                if (!isset($currentNode[$part])) {
                     $currentNode[$part] = [];
                 }
 
-                if($i === count($parts) - 1)
-                {
+                if ($i === count($parts) - 1) {
                     $currentNode[$part] = $files[$ind];
                 } else {
                     $currentNode = &$currentNode[$part];
                 }
-           }
+            }
         }
 
         return $tree;

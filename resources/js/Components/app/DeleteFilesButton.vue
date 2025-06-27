@@ -13,7 +13,6 @@
                         message="Are you sure you want to delete selected files?"
                         @cancel="onDeleteCancel"
                         @confirm="onDeleteConfirm">
-
     </ConfirmationDialog>
 </template>
 
@@ -48,7 +47,8 @@ const props = defineProps({
     deleteIds: {
         type: Array,
         required: false
-    }
+    },
+    parent_id: Number,
 })
 const emit = defineEmits(['delete'])
 
@@ -69,11 +69,11 @@ function onDeleteCancel(){
 }
 
 function onDeleteConfirm(){
-
-    deleteFilesForm.parent_id = page.props.folder?.data?.id ?? page.props.folder?.id
+    deleteFilesForm.parent_id = props.parent_id
     if (props.deleteAll) {
         deleteFilesForm.all = true
     } else {
+        deleteFilesForm.all = false
         deleteFilesForm.ids = props.deleteIds
     }
 

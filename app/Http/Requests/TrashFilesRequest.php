@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class TrashFilesRequest extends FormRequest
@@ -25,9 +26,11 @@ class TrashFilesRequest extends FormRequest
     {
         return [
             'all' => 'nullable|bool',
-            'ids.*' => Rule::exists('files', 'id')->where(function ($query) {
-                $query->where('created_by', Auth::id());
-            })
+            'ids.*' => Rule::exists('file_versions', 'id')->where(function ($query) {
+                $query->whereExists(function ($q){
+                    $q->select(DB::raw(1))->from('files')->whereColumn('files.id','file_versions.file_id')->where('created_by', Auth::id());
+                });
+            }),
         ];
     }
 }

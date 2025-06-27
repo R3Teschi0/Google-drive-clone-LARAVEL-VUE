@@ -19,6 +19,12 @@ class File extends Model
 {
     use HasFactory, HasCreatorAndUpdater, NodeTrait, SoftDeletes;
 
+    public function latestVersion()
+    {
+        return $this->hasOne(FileVersion::class, 'file_id')
+            ->orderByDesc('version');
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
@@ -91,12 +97,19 @@ class File extends Model
 
     public static function getSharedWithMe()
     {
-        return File::query()
+        $fileIds = File::query()
             ->select('files.*')
             ->join('file_shares', 'file_shares.file_id', 'files.id')
             ->where('file_shares.user_id', Auth::id())
-            ->orderBy('file_shares.created_at', 'desc')
-            ->orderBy('files.id', 'desc');
+            ->pluck('id')->toArray();
+
+        return FileVersion::query()->whereRaw('file_versions.version = (
+                        SELECT MAX(fv.version)
+                        FROM file_versions fv
+                        WHERE fv.file_id = file_versions.file_id
+            )')
+            ->whereIn('file_id', $fileIds);
+
     }
 
     public static function getSharedByMe()

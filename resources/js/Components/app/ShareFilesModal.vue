@@ -73,11 +73,11 @@ function onShow() {
 
 function share() {
     form.parent_id = page.props.folder?.data?.id ?? page.props.folder?.id
-    console.log(props.selectedIds, props.allSelected);
     if (props.allSelected) {
         form.all = true;
         form.ids = [];
     }  else {
+        form.all = false;
         form.ids = props.selectedIds
     }
     const email = form.email;

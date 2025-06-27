@@ -11,6 +11,8 @@ import { computed, onMounted, onUpdated, ref } from "vue";
 import { emitter, ON_SEARCH, showSuccessNotification } from "@/event-bus";
 import ShareFilesButton from "@/Components/app/ShareFilesButton.vue";
 import { useShiftPressed } from "@/Composables/useShiftPressed";
+import ViewVersions from "@/Components/app/ViewVersions.vue";
+import ModifyFile from "@/Components/app/ModifyFile.vue";
 
 //Props & Emit
 const props = defineProps({
@@ -22,10 +24,11 @@ const props = defineProps({
 let params = null;
 
 //computed
-const selectedIds = computed(() =>
-    Object.entries(selected.value)
-        .filter((a) => a[1])
-        .map((a) => a[0])
+const selectedIds = computed(
+    () =>
+        Object.entries(selected.value)
+            .filter((a) => a[1])
+            .map((a) => a[0]) // qui sono file_id
 );
 
 //methods
@@ -47,16 +50,14 @@ function showOnlyFavourites() {
 }
 
 function addRemoveFavourite(file) {
-    httpPost(route("file.addToFavourites"), { id: file.id })
+    httpPost(route("file.addToFavourites"), { id: file.file_id })
         .then(() => {
             file.is_favourite = !file.is_favourite;
             showSuccessNotification(
                 "Selected files have been added to favourites"
             );
         })
-        .catch(async (er) => {
-            console.log(er.error.message);
-        });
+        .catch(async (er) => {});
 }
 
 function loadMore() {
@@ -72,39 +73,39 @@ function loadMore() {
 
 function onSelectAllChange() {
     allFiles.value.data.forEach((f) => {
-        selected.value[f.id] = allSelected.value;
+        selected.value[f.file_id] = allSelected.value;
     });
 }
 
 function toggleFileSelected(file) {
     if (lastId.value && isShiftPressed.value) {
         const lastIndex = allFiles.value.data
-            .map((f) => f.id)
+            .map((f) => f.file_id)
             .findIndex((id) => id === lastId.value);
         const currIndex = allFiles.value.data
-            .map((f) => f.id)
-            .findIndex((id) => id === file.id);
+            .map((f) => f.file_id)
+            .findIndex((id) => id === file.file_id);
         const start = Math.min(lastIndex, currIndex);
         const end = Math.max(lastIndex, currIndex);
         for (let i = start; i < end; i++) {
-            selected.value[allFiles.value.data[i].id] = true;
+            selected.value[allFiles.value.data[i].file_id] = true;
         }
     }
-    if (!selected.value[file.id] && !isShiftPressed.value) {
-        lastId.value = file.id;
+    if (!selected.value[file.file_id] && !isShiftPressed.value) {
+        lastId.value = file.file_id;
     }
-    selected.value[file.id] = !selected.value[file.id];
+    selected.value[file.file_id] = !selected.value[file.file_id];
     onSelectCheckboxChange(file);
 }
 
 function onSelectCheckboxChange(file) {
-    if (!selected.value[file.id]) {
+    if (!selected.value[file.file_id]) {
         allSelected.value = false;
     } else {
         let checked = true;
 
         for (let file of allFiles.value.data) {
-            if (!selected.value[file.id]) {
+            if (!selected.value[file.file_id]) {
                 checked = false;
                 break;
             }
@@ -117,10 +118,6 @@ function onSelectCheckboxChange(file) {
 function onDelete() {
     allSelected.value = false;
     selected.value = {};
-}
-
-function viewVersions(file) {
-    router.visit(route("myFileVersions", { file: file }));
 }
 
 //Hooks
@@ -152,6 +149,7 @@ onMounted(() => {
 
 //refs
 const page = usePage();
+const parent_id = page.props.folder?.data?.id ?? page.props.folder?.id;
 const onlyFavourites = ref(false);
 const allSelected = ref(false);
 const selected = ref({});
@@ -235,11 +233,13 @@ const lastId = ref(null);
                 <DownloadFilesButton
                     :all="allSelected"
                     :ids="selectedIds"
+                    :parent_id="parent_id"
                     class="mr-2 ml-2"
                 />
                 <DeleteFilesButton
                     :delete-all="allSelected"
                     :delete-ids="selectedIds"
+                    :parent_id="parent_id"
                     @delete="onDelete"
                 />
             </div>
@@ -298,7 +298,7 @@ const lastId = ref(null);
                         @dblclick="openFolder(file)"
                         class="border-b transition duration-300 ease-in-out hover:bg-blue-100 cursor-pointer"
                         :class="
-                            selected[file.id] || allSelected
+                            selected[file.file_id] || allSelected
                                 ? 'bg-blue-50'
                                 : 'bg-white'
                         "
@@ -307,8 +307,8 @@ const lastId = ref(null);
                             class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 w-[30px] max-w-[30px] pr-0"
                         >
                             <Checkbox
-                                v-model="selected[file.id]"
-                                :checked="selected[file.id] || allSelected"
+                                v-model="selected[file.file_id]"
+                                :checked="selected[file.file_id] || allSelected"
                             />
                         </td>
                         <td
@@ -345,30 +345,22 @@ const lastId = ref(null);
                                 </svg>
                             </div>
                         </td>
-                        <td class="px-6 py-4 max-w-[40px] text-sm font-medium">
-                            <div @click.stop.prevent="viewVersions(file)">
-                                <svg
-                                v-if="!file.is_folder"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke-width="1.5"
-                                    stroke="currentColor"
-                                    class="size-6"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z"
-                                    />
-                                </svg>
+                        <td
+                            class="items-center px-4 py-2 max-w-[40px] first-line:text-sm font-medium text-gray-900 hover:text-blue-700 focus:z-10 mr-3"
+                        >
+                            <div>
+                                <ViewVersions
+                                    :is_folder="file.is_folder"
+                                    :file="file"
+                                    :folder="folder"
+                                />
                             </div>
                         </td>
                         <td
                             class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 flex items-center"
                         >
                             <FileIcon :file="file" />
-                            {{ file.name }}
+                            {{ file.original_name }}
                         </td>
                         <td
                             v-if="search"

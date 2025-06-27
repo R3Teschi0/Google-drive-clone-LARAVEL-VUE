@@ -30,7 +30,7 @@ class ParentIdBaseRequest extends FormRequest
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
     public function rules(): array
-    {;
+    {
         return [
             'parent_id' => [
                 Rule::exists(File::class, 'id')

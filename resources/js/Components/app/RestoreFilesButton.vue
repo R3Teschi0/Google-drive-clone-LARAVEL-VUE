@@ -80,6 +80,7 @@ function onRestoreConfirm() {
     if (props.allSelected) {
         form.all = true;
     } else {
+        form.all = false;
         form.ids = props.selectedIds;
     }
 

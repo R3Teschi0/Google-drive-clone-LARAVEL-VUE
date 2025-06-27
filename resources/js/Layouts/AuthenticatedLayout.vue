@@ -6,7 +6,13 @@ import SearchForm from "@/Components/app/SearchForm.vue";
 import UserSettingsDropdown from "@/Components/app/UserSettingsDropdown.vue";
 import ErrorDialog from "@/Components/ErrorDialog.vue";
 import Notification from "@/Components/Notification.vue";
-import { emitter, FILE_UPLOAD_STARTED, showErrorDialog, showSuccessNotification } from "@/event-bus";
+import {
+    emitter,
+    FILE_MODIFY_STARTED,
+    FILE_UPLOAD_STARTED,
+    showErrorDialog,
+    showSuccessNotification,
+} from "@/event-bus";
 import { useForm, usePage } from "@inertiajs/vue3";
 import { onMounted, ref } from "vue";
 
@@ -16,6 +22,7 @@ const fileUploadForm = useForm({
     files: [],
     relative_paths: [],
     parent_id: null,
+    fileModifiedId: null,
 });
 
 //methods
@@ -31,7 +38,6 @@ function onDragLeave() {
 function handlerDrop(ev) {
     dragOver.value = false;
     const files = ev.dataTransfer.files;
-    console.log(files);
     if (!files.length) {
         return;
     }
@@ -40,13 +46,18 @@ function handlerDrop(ev) {
 }
 
 function uploadFiles(files) {
-    fileUploadForm.parent_id = page.props.folder?.data?.id ?? page.props.folder?.id;
+    fileUploadForm.parent_id =
+        page.props.folder?.data?.id ?? page.props.folder?.id;
     fileUploadForm.files = files;
     fileUploadForm.relative_paths = [...files].map((f) => f.webkitRelativePath);
 
     fileUploadForm.post(route("file.store"), {
+        onStart: () => {
+            fileUploadForm.clearErrors();
+        },
         onSuccess: () => {
-            showSuccessNotification(`${files.length} files have been uploaded`)
+            showSuccessNotification(`${files.length} files have been uploaded`);
+            fileUploadForm.reset();
         },
         onError: (errors) => {
             let message = "";
@@ -58,11 +69,7 @@ function uploadFiles(files) {
             }
 
             showErrorDialog(message);
-        },
-        onFinish: () => {
-            fileUploadForm.clearErrors();
-            fileUploadForm.reset();
-        },
+        }
     });
 }
 
